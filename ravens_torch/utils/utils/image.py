@@ -193,7 +193,7 @@ def apply_rotations_to_tensor(in_tensor, num_rotations, center=None, reverse=Fal
             t_clone[idx, ...],
             theta,
             center=center,
-            resample=Image.NEAREST)
+            interpolation=Image.NEAREST)
     tensor = Rearrange('b c h w -> b h w c')(tensor)
 
     return tensor

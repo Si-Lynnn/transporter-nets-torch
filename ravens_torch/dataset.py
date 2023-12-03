@@ -161,7 +161,6 @@ class Dataset:
 def load_data(FLAGS, only_test=False):
     test_path = os.path.join(FLAGS.data_dir, f'{FLAGS.task}-test')
     train_path = os.path.join(FLAGS.data_dir, f'{FLAGS.task}-train')
-
     if FLAGS.verbose:
         if not only_test:
             print(f"Loading trainset from {train_path}")

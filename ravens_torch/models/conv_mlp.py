@@ -60,8 +60,11 @@ class SpatialSoftArgmax(nn.Module):
             torch.linspace(-1., 1., steps=W))
         image_coords = torch.stack((posx, posy), dim=2)  # (H, W, 2)
 
+        self.image_coords = image_coords.unsqueeze(0)
+        self.image_coords = self.image_coords.to(device='cuda:0')
+        # print(self.image_coords.shape)
         # Convert image coords to shape [1, H, W, 2]
-        self.image_coords = Rearrange('h w 2 -> 1 h w 2')(image_coords)
+        # self.image_coords = Rearrange('h w 2 -> 1 h w 2')(image_coords)
 
     def forward(self, x):
         # Apply softmax and convert to shape [B, C, H, W, 1]
@@ -116,8 +119,8 @@ class ConvMLP(nn.Module):
             nn.ReLU(),
             nn.Conv2d(filters[1], filters[2], 5),
             nn.BatchNorm2d(filters[2]),
-            nn.ReLU(),
-            SpatialSoftArgmax(self.batch_size),
+            nn.ReLU(),            
+            SpatialSoftArgmax(self.batch_size,H = 229, W = 309, C = 64),
             nn.Flatten(),
         )
 
@@ -146,7 +149,6 @@ class ConvMLP(nn.Module):
         x = x.unsqueeze(0)
         x = self.layer_rgb(x)
         x = self.layers_common(x)  # shape (B, C*2)
-
         return self.mlp(x)
 
 
