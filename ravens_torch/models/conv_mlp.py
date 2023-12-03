@@ -124,13 +124,11 @@ class ConvMLP(nn.Module):
             nn.Flatten(),
         )
 
-        self.mlp = MlpModel(
-            filters[-1] * 2,
-            d_action,
-            "relu",
-            use_mdn,
-            dropout=0.0,
-            use_sinusoid=False)
+        self.mlp = nn.Sequential(
+            DenseBlock(128, 128, activation=nn.ReLU),
+            DenseBlock(128, 128, activation=nn.ReLU),
+            DenseBlock(128, d_action, activation=None),
+        )
         # note: no dropout on top of conv
         # the conv layers seem to help regularize the mlp layers
 
@@ -149,7 +147,8 @@ class ConvMLP(nn.Module):
         x = x.unsqueeze(0)
         x = self.layer_rgb(x)
         x = self.layers_common(x)  # shape (B, C*2)
-        return self.mlp(x)
+        x = self.mlp(x)
+        return x
 
 
 def DeepConvMLP(in_channels, d_action, use_mdn, verbose=False):

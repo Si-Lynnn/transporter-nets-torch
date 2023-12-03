@@ -10,12 +10,12 @@ import numpy as np
 from ravens_torch.models.attention_convmlp import AttentionConvMLP
 from ravens_torch.tasks import cameras
 from ravens_torch.utils import utils
-
+import wandb
 
 class TransporterConvMLPAgent:
     """Agent that uses Transporter Networks."""
 
-    def __init__(self, name, task, root_dir, n_rotations=36, verbose=False):
+    def __init__(self, name, task, root_dir, n_rotations=36, verbose=False,use_wandb=False):
         self.name = name
         self.task = task
         self.total_steps = 0
@@ -28,6 +28,9 @@ class TransporterConvMLPAgent:
             preprocess=utils.preprocess_convmlp,
             verbose=False)
         # TODO: from 3D world to image coord
+        self.use_wandb = use_wandb
+        if use_wandb:
+            wandb.init(project="ravens",name="attention_convmlp")
 
     def get_sample(self, dataset, augment=False):
         """Get a dataset sample.
@@ -74,13 +77,16 @@ class TransporterConvMLPAgent:
         # Get training losses.
         step = self.total_steps + 1
         loss0 = self.attention_convmlp.train(img, p0)
-
+        
         writer.add_scalars([
             ('train_loss/attention_convmlp', loss0, step)
         ])
+        if self.use_wandb:
+            wandb.log({"train_loss/attention_convmlp": loss0})
 
         print(
             f'Train Iter: {step} \t AttentionConvMLP Loss: {loss0:.4f}')
+
         self.total_steps = step
 
     def validate(self, dataset, writer=None):  # pylint: disable=unused-argument
@@ -98,6 +104,8 @@ class TransporterConvMLPAgent:
         writer.add_scalars([
             ('test_loss/attention_convmlp', loss0, self.total_steps)
         ])
+        if self.use_wandb:
+            wandb.log({"test_loss/attention_convmlp": loss0})
 
         print(
             f'Validation: \t AttentionConvMLP Loss: {loss0:.4f}')

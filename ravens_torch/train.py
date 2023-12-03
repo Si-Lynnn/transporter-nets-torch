@@ -5,7 +5,7 @@
 
 from absl import app, flags
 import numpy as np
-
+import wandb 
 from ravens_torch import agents
 from ravens_torch.constants import EXPERIMENTS_DIR
 from ravens_torch.dataset import load_data
@@ -27,7 +27,7 @@ flags.DEFINE_integer('gpu_limit', None, '')
 flags.DEFINE_boolean('verbose', True, '')
 
 FLAGS = flags.FLAGS
-
+USE_WANDB = True
 
 def main(unused_argv):
     # Load train and test datasets.
@@ -43,7 +43,7 @@ def main(unused_argv):
         # Initialize agent.
         set_seed(train_run)
         agent = agents.names[FLAGS.agent](
-            name, FLAGS.task, FLAGS.train_dir, verbose=FLAGS.verbose)
+            name, FLAGS.task, FLAGS.train_dir, verbose=FLAGS.verbose,use_wandb=USE_WANDB)
 
         # Limit random sampling during training to a fixed dataset.
         max_demos = train_dataset.n_episodes
@@ -54,7 +54,7 @@ def main(unused_argv):
         while agent.total_steps < FLAGS.n_steps:
             for _ in range(FLAGS.interval):
                 agent.train(train_dataset, writer)
-            agent.validate(test_dataset, writer)
+                agent.validate(test_dataset, writer)
             if agent.total_steps % 1000 == 0:
                 agent.save(FLAGS.verbose)
 
