@@ -79,7 +79,7 @@ class SpatialSoftArgmax(nn.Module):
 class ConvMLP(nn.Module):
     """Conv MLP module."""
 
-    def __init__(self, d_action, use_mdn, pretrained=True, verbose=False):
+    def __init__(self, d_action, use_mdn, pretrained=False, verbose=False):
         super(ConvMLP, self).__init__()
 
         if pretrained:
@@ -99,26 +99,23 @@ class ConvMLP(nn.Module):
         filters = [64, 64, 64]
 
         self.layer_rgb = nn.Sequential(
+            Rearrange('b h w c -> b c h w'),
             nn.Conv2d(3, filters[0], 7, stride=2),
-            nn.BatchNorm1d(filters[0]),
+            nn.BatchNorm2d(filters[0]),
             nn.ReLU(),
         )
         if pretrained:
             self.layer_rgb[0].weight = conv1weights
             # weights=[conv1weights.numpy(), tf.zeros(64)],
 
-        self.layer_depth = nn.Sequential(
-            nn.Conv2d(3, filters[0], 7, stride=2),
-            nn.BatchNorm1d(filters[0]),
-            nn.ReLU(),
-        )
 
+        self.batch_size = 1
         self.layers_common = nn.Sequential(
             nn.Conv2d(filters[0], filters[1], 5),
-            nn.BatchNorm1d(filters[1]),
+            nn.BatchNorm2d(filters[1]),
             nn.ReLU(),
             nn.Conv2d(filters[1], filters[2], 5),
-            nn.BatchNorm1d(filters[2]),
+            nn.BatchNorm2d(filters[2]),
             nn.ReLU(),
             SpatialSoftArgmax(self.batch_size),
             nn.Flatten(),
@@ -137,7 +134,7 @@ class ConvMLP(nn.Module):
     def set_batch_size(self, batch_size):
         self.batch_size = batch_size
 
-    def call(self, x):
+    def forward(self, x):
         """FPROP through module.
 
         Args:
@@ -146,11 +143,8 @@ class ConvMLP(nn.Module):
         Returns:
           shape: (batch_size, self.d_action)
         """
-        rgb = self.layer_rgb(
-            x[Ellipsis, :3])  # only rgb channels through pre-trained
-        depth = self.layer_depth(x[Ellipsis, 3:])  # for depth
-        x = torch.cat((rgb, depth), dim=-1)
-
+        x = x.unsqueeze(0)
+        x = self.layer_rgb(x)
         x = self.layers_common(x)  # shape (B, C*2)
 
         return self.mlp(x)

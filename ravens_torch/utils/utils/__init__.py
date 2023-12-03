@@ -10,6 +10,7 @@ from ravens_torch.utils.utils.heightmap import (
 )
 from ravens_torch.utils.utils.image import (
     preprocess,
+    preprocess_convmlp,
     get_fused_heightmap,
     get_image_transform,
     check_transform,

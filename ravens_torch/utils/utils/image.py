@@ -19,6 +19,12 @@ from ravens_torch.utils.utils.heightmap import reconstruct_heightmaps, pix_to_xy
 # IMAGE UTILS
 # -----------------------------------------------------------------------------
 
+def preprocess_convmlp(img):
+    """Pre-process input (subtract mean, divide by std)."""
+    color_mean = 0.18877631
+    color_std = 0.07276466
+    img[:, :, :3] = (img[:, :, :3] / 255 - color_mean) / color_std
+    return img
 
 def preprocess(img):
     """Pre-process input (subtract mean, divide by std)."""

@@ -93,7 +93,7 @@ class MlpModel(nn.Module):
         self.obs_train_mean = obs_train_parameters["mean"]
         self.obs_train_std = obs_train_parameters["std"]
 
-    def call(self, x):
+    def forward(self, x):
         """FPROP through module.
 
         Args:

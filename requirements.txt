@@ -9,7 +9,7 @@ scipy==1.4.1
 scikit-image>=0.17.2
 transforms3d==0.3.1
 tensorboardX>=2.2
-torch==1.7.1
-torchvision==0.8.2
+torch==1.13.0
+torchvision==0.13.0
 einops==0.3.2
 scikit-video
