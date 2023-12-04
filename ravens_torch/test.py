@@ -24,9 +24,9 @@ flags.DEFINE_string('assets_root', ENV_ASSETS_DIR,
 flags.DEFINE_bool('disp', True, help='Display OpenGL window')
 flags.DEFINE_bool('shared_memory', False, '')
 flags.DEFINE_string('task', 'block-insertion', help='Task to complete')
-flags.DEFINE_string('agent', 'transporter',
+flags.DEFINE_string('agent', 'transporter_convmlp',
                     help='Agent to perform Pick-and-Place')
-flags.DEFINE_integer('n_demos', 100,
+flags.DEFINE_integer('n_demos', 150,
                      help='Number of training demos')
 flags.DEFINE_integer('n_steps', 40000,
                      help='Number of training steps performed')
@@ -57,6 +57,7 @@ def main(unused_argv):
     # Run testing for each training run.
     for train_run in range(FLAGS.n_runs):
         name = f'{FLAGS.task}-{FLAGS.agent}-{FLAGS.n_demos}-{train_run}'
+        print(name)
 
         # Initialize agent.
         set_seed(train_run)

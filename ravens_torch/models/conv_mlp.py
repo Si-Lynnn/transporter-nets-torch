@@ -184,7 +184,6 @@ def main(verbose=False):
 
     img = torch.randn(7, 320, 160, 3).to(device)
     out = conv_mlp(img)
-    print(out.shape)
 
 
 if __name__ == "__main__":

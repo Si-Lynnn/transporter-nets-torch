@@ -27,12 +27,11 @@ flags.DEFINE_integer('gpu_limit', None, '')
 flags.DEFINE_boolean('verbose', True, '')
 
 FLAGS = flags.FLAGS
-USE_WANDB = True
-
+#USE_WANDB = True
+USE_WANDB=False
 def main(unused_argv):
     # Load train and test datasets.
     train_dataset, test_dataset = load_data(FLAGS)
-
     # Run training from scratch multiple times.
     for train_run in range(FLAGS.n_runs):
         name = f'{FLAGS.task}-{FLAGS.agent}-{FLAGS.n_demos}-{train_run}'

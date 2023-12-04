@@ -17,7 +17,7 @@ from ravens_torch.models import mdn_utils
 from ravens_torch.models.conv_mlp import ConvMLP, DeepConvMLP
 
 from einops.layers.torch import Rearrange
-
+import matplotlib.pyplot as plt 
 # REMOVE BELOW
 import os
 os.environ['KMP_DUPLICATE_LIB_OK'] = "TRUE"
@@ -46,6 +46,9 @@ class AttentionConvMLP:
     def forward(self, in_img):
         """Forward pass."""
         input_data = self.preprocess(in_img)
+        # plt.imshow(input_data)
+        # plt.show()
+        # exit()
         in_tensor = torch.tensor(
             input_data, dtype=torch.float32).to(self.device)
         output = self.model(in_tensor)
@@ -70,10 +73,21 @@ class AttentionConvMLP:
 
         return np.float32(loss.detach().cpu().numpy())
 
+    def test_single_img(self,in_img):
+         """Test."""
+         self.eval_mode()
+
+         with torch.no_grad():
+            coord = self.forward(in_img)
+
+         return coord
+
     def test(self, in_img, p):
         """Test."""
         self.eval_mode()
-
+        plt.imshow(in_img)
+        plt.show()
+        # exit()
         with torch.no_grad():
             loss = self.train_block(in_img, p)
 

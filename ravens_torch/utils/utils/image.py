@@ -23,6 +23,7 @@ def preprocess_convmlp(img):
     """Pre-process input (subtract mean, divide by std)."""
     color_mean = 0.18877631
     color_std = 0.07276466
+    img[:,:,[0,1,2]] = img[:,:,[2,1,0]] # BGR -> RGB
     img[:, :, :3] = (img[:, :, :3] / 255 - color_mean) / color_std
     return img
 
@@ -34,6 +35,7 @@ def preprocess(img):
     depth_std = 0.00903967
     img[:, :, :3] = (img[:, :, :3] / 255 - color_mean) / color_std
     img[:, :, 3:] = (img[:, :, 3:] - depth_mean) / depth_std
+    img[:,:,[0,1,2]] = img[:,:,[2,1,0]]
     return img
 
 
@@ -192,8 +194,8 @@ def apply_rotations_to_tensor(in_tensor, num_rotations, center=None, reverse=Fal
         tensor[idx, ...] = rotate(
             t_clone[idx, ...],
             theta,
-            center=center,
-            interpolation=Image.NEAREST)
+            center=center)
+            # sampling=Image.NEAREST)
     tensor = Rearrange('b c h w -> b h w c')(tensor)
 
     return tensor

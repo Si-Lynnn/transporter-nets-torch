@@ -107,9 +107,8 @@ class TransporterConvMLPAgent:
         if self.use_wandb:
             wandb.log({"test_loss/attention_convmlp": loss0})
 
-        print(
-            f'Validation: \t AttentionConvMLP Loss: {loss0:.4f}')
-
+        print(f'Validation: \t AttentionConvMLP Loss: {loss0:.4f}')
+            
     def act(self, obs, info=None, goal=None):  # pylint: disable=unused-argument
         """Run inference and return best action given visual observations."""
         self.attention_convmlp.eval_mode()
@@ -117,7 +116,7 @@ class TransporterConvMLPAgent:
         # Attention model forward pass.
         img = obs['color'][0]
         pick_conf = self.attention_convmlp.forward(img)
-        argmax = np.argmax(pick_conf)
+        argmax = np.argmax(pick_conf.to('cpu').detach().numpy())
         argmax = np.unravel_index(argmax, shape=pick_conf.shape)
         p0_pix = argmax[:2]
 
@@ -136,7 +135,6 @@ class TransporterConvMLPAgent:
     def load(self, n_iter, verbose=False):
         """Load pre-trained models."""
         attention_fname = self.get_checkpoint_names(n_iter)
-
         self.attention_convmlp.load(attention_fname, verbose)
         self.total_steps = n_iter
 
@@ -148,3 +146,12 @@ class TransporterConvMLPAgent:
             self.total_steps)
 
         self.attention_convmlp.save(attention_fname, verbose)
+
+    def pick_loc(self, img):
+        """Pick location from attention model."""
+        # self.attention_convmlp.eval_mode()
+
+        # Attention model forward pass.
+        pick_conf = self.attention_convmlp.test_single_img(img)
+
+        return pick_conf
