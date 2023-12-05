@@ -57,6 +57,7 @@ class AttentionConvMLP:
     def train_block(self, in_img, p):
         output = self.forward(in_img)
         label = torch.tensor(p, dtype=torch.float32).to(self.device)
+        print(output, label)
         loss = self.loss(output, label)
         return loss
 
@@ -85,8 +86,8 @@ class AttentionConvMLP:
     def test(self, in_img, p):
         """Test."""
         self.eval_mode()
-        plt.imshow(in_img)
-        plt.show()
+        # plt.imshow(in_img)
+        # plt.show()
         # exit()
         with torch.no_grad():
             loss = self.train_block(in_img, p)

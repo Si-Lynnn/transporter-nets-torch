@@ -26,6 +26,8 @@ from frankapy import FrankaArm
 from autolab_core import RigidTransform
 from transform import *
 import matplotlib.pyplot as plt
+import cv2
+import copy
 
 flags.DEFINE_string('root_dir', EXPERIMENTS_DIR, help='Location of test data')
 flags.DEFINE_string('data_dir', EXPERIMENTS_DIR, '')
@@ -51,7 +53,7 @@ FLAGS = flags.FLAGS
 
 
 class robot_arm:
-    def __init__(self, translate_height=0.1, pick_height=0.01, xrange=[0.025, 0.35], yrange=[0, 0.6]): 
+    def __init__(self, translate_height=0.15, pick_height=0.01, xrange=[0.025, 0.35], yrange=[0, 0.6]): 
         self.translate_height = translate_height
         self.pick_height = pick_height
         self.xrange = xrange
@@ -63,6 +65,8 @@ class robot_arm:
 
         self.init_robot()
         self.init_camera()
+
+        # self.transform_rob2world
 
     def init_robot(self):
         print("Initializing robot...")
@@ -89,22 +93,26 @@ class robot_arm:
         self.fa.reset_pose()
         self.fa.reset_joints()
         self.fa.open_gripper()
+    
+    def print_current_pose(self):
+        T_ee_world = self.fa.get_pose()
+        print(T_ee_world)
 
     def grasp(self):
         self.fa.close_gripper()
-    
+
     def ungrasp(self):
         self.fa.open_gripper()
     
     def get_image(self):
         capture = self.kinect.get_capture(-1)
         color_img = capture.color.data
-        color_img = cv2.resize(color_img, (640, 480))
-        depth_img = capture.transformed_depth.data
-        depth_img = cv2.resize(depth_img, (640, 480))
+        color_img = cv2.resize(color_img, (320, 180))
+        depth_img = capture.depth.data
+        depth_img = cv2.resize(depth_img, (320, 180))
         return color_img, depth_img
 
-    def translate(self, loc):
+    def translate(self, translate_goal):
         T_ee_world = self.fa.get_pose()
         T_ee_goal = copy.deepcopy(T_ee_world)
 
@@ -113,7 +121,7 @@ class robot_arm:
         desired_pose_world = copy.deepcopy(current_pose_world)
         desired_pose_world[-1] = self.translate_height
         desired_pose_rob = world2rob(desired_pose_world)
-        T_ee_goal.translation = desired_pose_robot
+        T_ee_goal.translation = desired_pose_rob
         self.fa.goto_pose(T_ee_goal, use_impedance=False)
 
         # translate to goal at translate height
@@ -121,7 +129,12 @@ class robot_arm:
         self.fa.goto_pose(T_ee_goal, use_impedance=False)
 
     def goto_above_pick(self, loc):
-        rob_translate_goal = world2rob(np.append(loc, self.translate_height))
+        des_loc = np.append(loc, self.translate_height)
+        print("des loc", des_loc)
+        rob_translate_goal = world2rob(des_loc)
+        print(rob_translate_goal)
+        print(self.fa.get_pose().translation)
+        print(world2rob(self.fa.get_pose().translation))
         self.translate(rob_translate_goal)
         self.current_world = rob2world(rob_translate_goal)
         self.open_gripper()
@@ -141,11 +154,19 @@ class robot_arm:
     def stop(self):
         self.reset_arm()
         self.stop_camera()
+
+
+def image_preprocess(img):
+    pass
+
         
 
 def main(unused_argv):
-    path = "/home/student/team-joe/ai4m_project-main/data/"
-    file_name = "data_10steps_test_blue.pkl"
+    # path = "/home/student/team-joe/ai4m_project-main/data/"
+    path ='/home/student/team-joe/ai4m_project-main/processed_data/block-insertion-test/'
+    # file_name = "data_10steps_test_blue.pkl"
+
+
 
     print("env")
     #env = Environment(
@@ -161,47 +182,76 @@ def main(unused_argv):
     name = f'{FLAGS.task}-{FLAGS.agent}-{FLAGS.n_demos}-0'
     agent = agents.names[FLAGS.agent](name, FLAGS.task, FLAGS.root_dir)
     agent.load(FLAGS.n_steps, FLAGS.verbose)
-
-    # Load data
-    with open(f'{path}action/{file_name}', 'rb') as f:
-        actions = pkl.load(f)
-    with open(f'{path}color/{file_name}', 'rb') as f:
-        color = pkl.load(f)
-    with open(f'{path}depth/{file_name}', 'rb') as f:
-        depth = pkl.load(f)
-    
-    print("Starting images")
-
-    for img in color:
-        print(img.shape)
-        # img = img[:, :, :-1]
-        img = img[:,:,:3] # BGR -> RGB is done in preprocessing
-        plt.imshow(img)
-        loc = agent.pick_loc(img)
-        loc = loc.to('cpu').detach().numpy()[0]
-        loc = np.append(loc,np.array([0.03]))
+    files = os.listdir(path+'action/')
+    for file_name in files:
+        # Load data
+        with open(f'{path}action/{file_name}', 'rb') as f:
+            actions = pkl.load(f)
+        with open(f'{path}color/{file_name}', 'rb') as f:
+            color = pkl.load(f)
+        with open(f'{path}depth/{file_name}', 'rb') as f:
+            depth = pkl.load(f)
         
-        # print(loc[0])
-        # plt.imshow(img)
-        # plt.scatter(loc[0], loc[1], c='r', s=100)
+        print("Starting images")
 
-        # plt.plot(loc, '*')
-        print("robot coords inference:")
-        print(loc)
-        plt.show()
+        for i, img in enumerate(color):
+            print(img.shape)
+            # img = img[:, :, :-1]
+            # img = img[0][:,:,:3] # BGR -> RGB is done in preprocessing
+            # print(img.shape)
+            # edge = int((320-240)/2)
+            # img = img[:,edge*2:,:]
+            # desired_size = (640, 480)
+            # img = cv2.resize(img, desired_size)
+            img = img[0]
+            plt.imshow(img)
+            loc = agent.pick_loc(img)
+            loc = loc.to('cpu').detach().numpy()[0]
+            loc = np.append(loc,np.array([0.03]))
+            
+            # print(loc[0])
+            # plt.imshow(img)
+            # plt.scatter(loc[0], loc[1], c='r', s=100)
+
+            # plt.plot(loc, '*')
+            print("robot coords inference:")
+            print(loc, actions[i])
+            plt.show()
 
 
-    '''
+
+def test_run(unused_argv):
+    # Load agentow(img)
+    # plt.show(
+    name = f'{FLAGS.task}-{FLAGS.agent}-{FLAGS.n_demos}-0'
+    agent = agents.names[FLAGS.agent](name, FLAGS.task, FLAGS.root_dir)
+    agent.load(FLAGS.n_steps, FLAGS.verbose)
+
     rob = robot_arm()
     color_img, depth_img = rob.get_image()
-    pick_loc = pick_loc(color_img)
-    rob.goto_pick_loc(pick_loc)
-    rob.pick(pick_loc)
-    place_loc = pick_loc + np.array([0.05, 0.05])
-    rob.place(place_loc)
-    rob.stop() 
-    '''
+
+    img = color_img[:,:,:3] # BGR -> RGB is done in preprocessing
+    # print(img.shape)
+    # plt.imshow(img)
+    # plt.show()
+    edge = int((320-240)/2)
+    bottom = int(50)
+    img = img[:-bottom,edge*2:,:]
+    desired_size = (240, 130)
+    img = cv2.resize(img, desired_size)
+    plt.imshow(img)
+    plt.show()
     
+    pick_loc = agent.pick_loc(img)
+    pick_loc = pick_loc.to('cpu').detach().numpy()[0]
+    print("Predicted pick location:", pick_loc)
+    rob.print_current_pose()
+    rob.goto_above_pick(pick_loc)
+    # rob.pick(pick_loc)
+    # place_loc = pick_loc + np.array([0.05, 0.05])
+    # rob.place(place_loc)
+    # rob.stop() 
 
 if __name__ == '__main__':
-    app.run(main)
+    # app.run(main)
+    app.run(test_run)

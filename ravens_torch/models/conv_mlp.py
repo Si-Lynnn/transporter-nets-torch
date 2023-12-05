@@ -11,6 +11,9 @@ import torch.nn as nn
 from ravens_torch.models.gt_state import MlpModel
 from ravens_torch.models.resnet import ResNet43_8s
 from ravens_torch.utils import to_device
+import torchvision.models as models
+from einops import rearrange
+
 
 
 def init_normal_weights_bias(m):
@@ -85,49 +88,21 @@ class ConvMLP(nn.Module):
     def __init__(self, d_action, use_mdn, pretrained=False, verbose=False):
         super(ConvMLP, self).__init__()
 
-        if pretrained:
-            inception = torch.hub.load(
-                'pytorch/vision:v0.9.0', 'googlenet', pretrained=True)
-            inception.train()
-
-            # CHECK WHICH LAYER TO CONSIDER
-            for i in inception.weights:
-                if "Conv2d_1a_7x7/weights" in i.name:
-                    conv1weights = i
-                    break
+        self.resnet = models.resnet18(pretrained=True)
+        for param in self.resnet.parameters():
+            param.requires_grad = True
 
         self.d_action = d_action
 
-        # filters = [64, 32, 16]
-        filters = [64, 64, 64]
-
-        self.layer_rgb = nn.Sequential(
-            Rearrange('b h w c -> b c h w'),
-            nn.Conv2d(3, filters[0], 7, stride=2),
-            nn.BatchNorm2d(filters[0]),
-            nn.ReLU(),
-        )
-        if pretrained:
-            self.layer_rgb[0].weight = conv1weights
-            # weights=[conv1weights.numpy(), tf.zeros(64)],
-
-
-        self.batch_size = 1
-        self.layers_common = nn.Sequential(
-            nn.Conv2d(filters[0], filters[1], 5),
-            nn.BatchNorm2d(filters[1]),
-            nn.ReLU(),
-            nn.Conv2d(filters[1], filters[2], 5),
-            nn.BatchNorm2d(filters[2]),
-            nn.ReLU(),            
-            SpatialSoftArgmax(self.batch_size,H = 229, W = 309, C = 64),
-            nn.Flatten(),
-        )
-
         self.mlp = nn.Sequential(
-            DenseBlock(128, 128, activation=nn.ReLU),
-            DenseBlock(128, 128, activation=nn.ReLU),
-            DenseBlock(128, d_action, activation=None),
+            nn.Linear(1000, 128),
+            nn.ReLU(),
+            nn.Linear(128, 32),
+            nn.ReLU(),
+            nn.Linear(32, d_action)
+            # DenseBlock(1000, 128, activation=nn.ReLU),
+            # DenseBlock(128, 32, activation=nn.ReLU),
+            # DenseBlock(32, d_action, activation=None),
         )
         # note: no dropout on top of conv
         # the conv layers seem to help regularize the mlp layers
@@ -145,8 +120,8 @@ class ConvMLP(nn.Module):
           shape: (batch_size, self.d_action)
         """
         x = x.unsqueeze(0)
-        x = self.layer_rgb(x)
-        x = self.layers_common(x)  # shape (B, C*2)
+        x = rearrange(x, 'b h w c -> b c h w')
+        x = self.resnet(x)
         x = self.mlp(x)
         return x
 

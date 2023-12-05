@@ -149,7 +149,7 @@ class TransporterConvMLPAgent:
 
     def pick_loc(self, img):
         """Pick location from attention model."""
-        # self.attention_convmlp.eval_mode()
+        self.attention_convmlp.eval_mode()
 
         # Attention model forward pass.
         pick_conf = self.attention_convmlp.test_single_img(img)

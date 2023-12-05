@@ -11,6 +11,8 @@ from PIL import Image
 import torchvision
 from torchvision.transforms.functional import rotate
 from einops.layers.torch import Rearrange
+from torchvision import transforms
+
 
 from ravens_torch.utils.utils.heightmap import reconstruct_heightmaps, pix_to_xyz
 
@@ -21,8 +23,10 @@ from ravens_torch.utils.utils.heightmap import reconstruct_heightmaps, pix_to_xy
 
 def preprocess_convmlp(img):
     """Pre-process input (subtract mean, divide by std)."""
-    color_mean = 0.18877631
-    color_std = 0.07276466
+    # color_mean = 0.18877631
+    # color_std = 0.07276466
+    color_mean = np.array([0.485, 0.456, 0.406])
+    color_std = np.array([0.229, 0.224, 0.225])
     img[:,:,[0,1,2]] = img[:,:,[2,1,0]] # BGR -> RGB
     img[:, :, :3] = (img[:, :, :3] / 255 - color_mean) / color_std
     return img
