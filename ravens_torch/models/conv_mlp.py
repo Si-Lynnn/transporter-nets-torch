@@ -7,6 +7,7 @@
 from einops.layers.torch import Rearrange
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from ravens_torch.models.gt_state import MlpModel
 from ravens_torch.models.resnet import ResNet43_8s
@@ -97,15 +98,15 @@ class ConvMLP(nn.Module):
                     break
 
         self.d_action = d_action
-
+        self.init_convs()
         # filters = [64, 32, 16]
-        filters = [64, 64, 64]
+        filters = [3, 64, 64]
 
         self.layer_rgb = nn.Sequential(
             Rearrange('b h w c -> b c h w'),
-            nn.Conv2d(3, filters[0], 7, stride=2),
-            nn.BatchNorm2d(filters[0]),
-            nn.ReLU(),
+            # nn.Conv2d(3, filters[0], 7, stride=2),
+            # nn.BatchNorm2d(filters[0]),
+            # nn.ReLU(),
         )
         if pretrained:
             self.layer_rgb[0].weight = conv1weights
@@ -113,19 +114,9 @@ class ConvMLP(nn.Module):
 
 
         self.batch_size = 1
-        self.layers_common = nn.Sequential(
-            nn.Conv2d(filters[0], filters[1], 5),
-            nn.BatchNorm2d(filters[1]),
-            nn.ReLU(),
-            nn.Conv2d(filters[1], filters[2], 5),
-            nn.BatchNorm2d(filters[2]),
-            nn.ReLU(),            
-            SpatialSoftArgmax(self.batch_size,H = 229, W = 309, C = 64),
-            nn.Flatten(),
-        )
 
         self.mlp = nn.Sequential(
-            DenseBlock(128, 128, activation=nn.ReLU),
+            DenseBlock(1536, 128, activation=nn.ReLU),
             DenseBlock(128, 128, activation=nn.ReLU),
             DenseBlock(128, d_action, activation=None),
         )
@@ -134,6 +125,72 @@ class ConvMLP(nn.Module):
 
     def set_batch_size(self, batch_size):
         self.batch_size = batch_size
+
+    def layers_common(self, x):
+        x = self.conv1(x)
+        x = self.maxpool1(x)
+        x = self.relu1(x)
+
+        x = self.conv2(x)
+        x = self.maxpool2(x)
+        x = self.relu2(x)
+
+        x = self.conv3(x)
+        x = self.maxpool3(x)
+        x = self.relu3(x)
+
+        x = self.conv4(x)
+        x = self.maxpool4(x)
+        x = self.relu4(x)
+
+        x = self.conv_t0(x)
+        x = F.relu(x, inplace=True)
+        x = self.conv_t1(x)
+        x = F.relu(x, inplace=True)
+        x = self.conv_t2(x)
+        x = F.relu(x, inplace=True)
+        x = self.conv_t3(x)
+        x = F.relu(x, inplace=True)
+
+        x = self.conv_final(x)
+        x = self.relu4(x)
+
+        # Should add a softmax in here..
+
+        
+        # x = x.squeeze(1)
+        #spatial soft argmax
+        x = self.spatial_softmax(x).flatten()
+        return x
+
+    def init_convs(self):
+        self.conv1 = nn.Conv2d(in_channels=3, out_channels=4, kernel_size=3, stride=1, padding=1, bias=False)
+        self.maxpool1 = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.relu1 = nn.ReLU(inplace=True)
+
+        self.conv2 = nn.Conv2d(in_channels=4, out_channels=8, kernel_size=3, stride=1, padding=1, bias=False)
+        self.maxpool2 = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.relu2 = nn.ReLU(inplace=True)
+
+        self.conv3 = nn.Conv2d(in_channels=8, out_channels=16, kernel_size=3, stride=1, padding=1, bias=False)
+        self.maxpool3 = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.relu3 = nn.ReLU(inplace=True)
+
+        self.conv4 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=1, padding=1, bias=False)
+        self.maxpool4 = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.relu4 = nn.ReLU(inplace=True)
+
+        self.conv_t0 = nn.ConvTranspose2d(in_channels=32, out_channels=16, kernel_size=2, stride=2)
+        self.conv_t1 = nn.ConvTranspose2d(in_channels=16, out_channels=8, kernel_size=2, stride=2)
+        self.conv_t2 = nn.ConvTranspose2d(in_channels=8, out_channels=4, kernel_size=2, stride=2)
+        self.conv_t3 = nn.ConvTranspose2d(in_channels=4, out_channels=3, kernel_size=2, stride=2)
+
+        self.conv_final = nn.Conv2d(in_channels=3, out_channels=1, kernel_size=3, stride=1, padding=1, bias=False)
+        self.relu4 = nn.ReLU(inplace=True)
+
+        self.softmax = nn.Softmax(dim=0)
+        self.spatial_softmax = SpatialSoftArgmax(1, H=480, W=640, C=1)
+        
 
     def forward(self, x):
         """FPROP through module.
@@ -147,7 +204,8 @@ class ConvMLP(nn.Module):
         x = x.unsqueeze(0)
         x = self.layer_rgb(x)
         x = self.layers_common(x)  # shape (B, C*2)
-        x = self.mlp(x)
+        
+        # x = self.mlp(x)
         return x
 
 
