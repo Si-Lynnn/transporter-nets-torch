@@ -27,7 +27,7 @@ flags.DEFINE_integer('gpu_limit', None, '')
 flags.DEFINE_boolean('verbose', True, '')
 
 FLAGS = flags.FLAGS
-USE_WANDB = False
+USE_WANDB = True
 
 def main(unused_argv):
     # Load train and test datasets.

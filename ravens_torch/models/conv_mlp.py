@@ -116,7 +116,7 @@ class ConvMLP(nn.Module):
         self.batch_size = 1
 
         self.mlp = nn.Sequential(
-            DenseBlock(1536, 128, activation=nn.ReLU),
+            DenseBlock(2, 128, activation=nn.ReLU),
             DenseBlock(128, 128, activation=nn.ReLU),
             DenseBlock(128, d_action, activation=None),
         )
@@ -205,7 +205,7 @@ class ConvMLP(nn.Module):
         x = self.layer_rgb(x)
         x = self.layers_common(x)  # shape (B, C*2)
         
-        # x = self.mlp(x)
+        x = self.mlp(x)
         return x
 
 
