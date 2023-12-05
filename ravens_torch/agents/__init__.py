@@ -18,9 +18,11 @@ from ravens_torch.agents.transporter import OriginalTransporterAgent
 from ravens_torch.agents.transporter import PerPixelLossTransporterAgent
 from ravens_torch.agents.transporter_6dof import Transporter6dAgent
 from ravens_torch.agents.transporter_convmlp import TransporterConvMLPAgent
+from ravens_torch.agents.transporter_place import TransporterPlaceAgent
 
 names = {'dummy': DummyAgent,
          'transporter_convmlp': TransporterConvMLPAgent,
+         'transporter_place': TransporterPlaceAgent,
          'transporter': OriginalTransporterAgent,
          'transporter_6d': Transporter6dAgent,
          'no_transport': NoTransportTransporterAgent,
