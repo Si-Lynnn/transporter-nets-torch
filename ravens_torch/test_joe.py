@@ -21,7 +21,7 @@ from ravens_torch.dataset import load_data
 from ravens_torch.utils import SummaryWriter
 from ravens_torch.utils.initializers import get_log_dir, set_seed
 from transform import *
-import k4a 
+import k4a
 from frankapy import FrankaArm
 from autolab_core import RigidTransform
 from transform import *
@@ -53,7 +53,7 @@ FLAGS = flags.FLAGS
 
 
 class robot_arm:
-    def __init__(self, translate_height=0.15, pick_height=0.01, xrange=[0.025, 0.35], yrange=[0, 0.6]): 
+    def __init__(self, translate_height=0.15, pick_height=0.01, xrange=[0.025, 0.35], yrange=[0, 0.6]):
         self.translate_height = translate_height
         self.pick_height = pick_height
         self.xrange = xrange
@@ -74,18 +74,18 @@ class robot_arm:
         self.fa.reset_pose()
         self.fa.reset_joints()
         self.fa.open_gripper()
-    
+
     def init_camera(self):
         self.kinect = k4a.Device.open()
         device_config = k4a.DEVICE_CONFIG_BGRA32_1080P_NFOV_UNBINNED_FPS15
         self.kinect.start_cameras(device_config)
         # Get calibration
         calibration = self.kinect.get_calibration(
-            depth_mode=device_config.depth_mode, 
+            depth_mode=device_config.depth_mode,
             color_resolution=device_config.color_resolution)
         # Create transformation
         self.transformation = k4a.Transformation(calibration)
-    
+
     def stop_camera(self):
         self.kinect.stop_cameras()
 
@@ -93,7 +93,7 @@ class robot_arm:
         self.fa.reset_pose()
         self.fa.reset_joints()
         self.fa.open_gripper()
-    
+
     def print_current_pose(self):
         T_ee_world = self.fa.get_pose()
         print(T_ee_world)
@@ -103,7 +103,7 @@ class robot_arm:
 
     def ungrasp(self):
         self.fa.open_gripper()
-    
+
     def get_image(self):
         capture = self.kinect.get_capture(-1)
         color_img = capture.color.data
@@ -144,7 +144,7 @@ class robot_arm:
         self.translate(rob_pick_goal)
         self.current_world = rob2world(rob_pick_goal)
         self.grasp()
-    
+
     def place(self, loc):
         rob_place_goal = world2rob(np.append(loc, self.translate_height))
         self.translate(rob_place_goal)
@@ -159,7 +159,7 @@ class robot_arm:
 def image_preprocess(img):
     pass
 
-        
+
 
 def main(unused_argv):
     # path = "/home/student/team-joe/ai4m_project-main/data/"
@@ -191,7 +191,7 @@ def main(unused_argv):
             color = pkl.load(f)
         with open(f'{path}depth/{file_name}', 'rb') as f:
             depth = pkl.load(f)
-        
+
         print("Starting images")
 
         for i, img in enumerate(color):
@@ -208,7 +208,7 @@ def main(unused_argv):
             loc = agent.pick_loc(img)
             loc = loc.to('cpu').detach().numpy()[0]
             loc = np.append(loc,np.array([0.03]))
-            
+
             # print(loc[0])
             # plt.imshow(img)
             # plt.scatter(loc[0], loc[1], c='r', s=100)
@@ -250,7 +250,7 @@ def test_run(unused_argv):
     # rob.pick(pick_loc)
     # place_loc = pick_loc + np.array([0.05, 0.05])
     # rob.place(place_loc)
-    # rob.stop() 
+    # rob.stop()
 
 if __name__ == '__main__':
     # app.run(main)

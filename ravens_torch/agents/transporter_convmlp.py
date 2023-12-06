@@ -20,11 +20,9 @@ class TransporterConvMLPAgent:
         self.task = task
         self.total_steps = 0
         self.n_rotations = n_rotations
-        self.in_shape = (640, 480, 3)
         self.models_dir = os.path.join(root_dir, 'checkpoints', self.name)
 
         self.attention_convmlp = AttentionConvMLP(
-            in_shape=self.in_shape,
             preprocess=utils.preprocess_convmlp,
             verbose=False)
         # TODO: from 3D world to image coord
@@ -77,7 +75,7 @@ class TransporterConvMLPAgent:
         # Get training losses.
         step = self.total_steps + 1
         loss0 = self.attention_convmlp.train(img, p0)
-        
+
         writer.add_scalars([
             ('train_loss/attention_convmlp', loss0, step)
         ])
@@ -108,7 +106,7 @@ class TransporterConvMLPAgent:
             wandb.log({"test_loss/attention_convmlp": loss0})
 
         print(f'Validation: \t AttentionConvMLP Loss: {loss0:.4f}')
-            
+
     def act(self, obs, info=None, goal=None):  # pylint: disable=unused-argument
         """Run inference and return best action given visual observations."""
         self.attention_convmlp.eval_mode()
