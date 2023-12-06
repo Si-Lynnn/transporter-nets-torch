@@ -240,9 +240,9 @@ class data_collector:
         square_box = np.array([[square_size, square_size], [square_size, -square_size], [-square_size, -square_size], [-square_size, square_size]])
         box = center + np.dot(square_box, np.array([[np.cos(angle), np.sin(angle)], [-np.sin(angle), np.cos(angle)]]))
         box = box.astype(np.int32)
-        mask = self.detect_bag(color_img, bag_color)
-        cv2.drawContours(color_img, [box], -1, (0, 255, 0), -1)
-        color_img = np.where(mask[:,:,None], color_img_copy, color_img)
+        # mask = self.detect_bag(color_img, bag_color)
+        # cv2.drawContours(color_img, [box], -1, (0, 255, 0), -1)
+        # color_img = np.where(mask[:,:,None], color_img_copy, color_img)
         color_img_copy = np.copy(color_img)
 
         debug = True
@@ -306,9 +306,9 @@ class data_collector:
         square_box = np.array([[square_size, square_size], [square_size, -square_size], [-square_size, -square_size], [-square_size, square_size]])
         box = center + np.dot(square_box, np.array([[np.cos(angle), np.sin(angle)], [-np.sin(angle), np.cos(angle)]]))
         box = box.astype(np.int32)
-        mask = self.detect_bag(color_img, bag_color)
-        cv2.drawContours(color_img, [box], -1, (0, 255, 0), -1)
-        color_img = np.where(mask[:,:,None], color_img_copy, color_img)
+        #mask = self.detect_bag(color_img, bag_color)
+        #cv2.drawContours(color_img, [box], -1, (0, 255, 0), -1)
+        #color_img = np.where(mask[:,:,None], color_img_copy, color_img)
         color_img_copy = np.copy(color_img)
 
         debug = True
