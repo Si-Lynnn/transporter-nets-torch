@@ -38,9 +38,9 @@ flags.DEFINE_bool('shared_memory', False, '')
 flags.DEFINE_string('task', 'block-insertion', help='Task to complete')
 flags.DEFINE_string('agent', 'transporter_convmlp',
                     help='Agent to perform Pick-and-Place')
-flags.DEFINE_integer('n_demos', 150,
+flags.DEFINE_integer('n_demos', 200,
                      help='Number of training demos')
-flags.DEFINE_integer('n_steps', 1000,
+flags.DEFINE_integer('n_steps', 5000,
                      help='Number of training steps performed')
 flags.DEFINE_integer('n_runs', 1, '')
 flags.DEFINE_integer('gpu', 0, '')
@@ -163,7 +163,7 @@ def image_preprocess(img):
 
 def main(unused_argv):
     # path = "/home/student/team-joe/ai4m_project-main/data/"
-    path ='/home/student/team-joe/ai4m_project-main/processed_data/block-insertion-test/'
+    path ='/home/student/team-joe/transporter-nets-torch/new_processed_data/block-insertion-test/'  
     # file_name = "data_10steps_test_blue.pkl"
 
 
@@ -174,7 +174,7 @@ def main(unused_argv):
     #    disp=FLAGS.disp,
     #    shared_memory=FLAGS.shared_memory,
     #    hz=240)
-    print("tasls")
+    print("tasks")
     task = tasks.names[FLAGS.task]()
     task._set_mode('test')
     print(bold("=" * 20 + "\n" + f"TASK: {FLAGS.task}" + "\n" + "=" * 20))
@@ -253,5 +253,5 @@ def test_run(unused_argv):
     # rob.stop()
 
 if __name__ == '__main__':
-    # app.run(main)
-    app.run(test_run)
+    app.run(main)
+    # app.run(test_run)

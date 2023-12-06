@@ -19,12 +19,9 @@ class TransporterPlaceAgent:
         self.name = name
         self.task = task
         self.total_steps = 0
-        self.n_rotations = n_rotations
-        self.in_shape = (640, 480, 3)
         self.models_dir = os.path.join(root_dir, 'checkpoints', self.name)
 
         self.attention_convmlp = AttentionConvMLP(
-            in_shape=self.in_shape,
             preprocess=utils.preprocess_convmlp,
             verbose=False)
         # TODO: from 3D world to image coord
@@ -147,11 +144,12 @@ class TransporterPlaceAgent:
 
         self.attention_convmlp.save(attention_fname, verbose)
 
-    def place_loc(self, img):
+    def pick_loc(self, img):
         """Pick location from attention model."""
         self.attention_convmlp.eval_mode()
 
         # Attention model forward pass.
         place_conf = self.attention_convmlp.test_single_img(img)
+        print("here")
 
         return place_conf

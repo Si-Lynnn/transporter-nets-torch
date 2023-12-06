@@ -31,11 +31,11 @@ class AttentionConvMLP:
         self.model = ConvMLP(d_action=2, use_mdn=use_mdn)
         self.device = to_device([self.model], "Regression", verbose=verbose)
 
-        self.optimizer = optim.Adam(self.model.parameters(), lr=2e-4)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=1e-4)
         self.metric = MeanMetrics()
         self.val_metric = MeanMetrics()
 
-        self.loss = nn.MSELoss() if not use_mdn else mdn_utils.mdn_loss
+        self.loss = nn.L1Loss() #nn.MSELoss() if not use_mdn else mdn_utils.mdn_loss
 
     def forward(self, in_img):
         """Forward pass."""
@@ -51,7 +51,7 @@ class AttentionConvMLP:
     def train_block(self, in_img, p):
         output = self.forward(in_img)
         label = torch.tensor(p, dtype=torch.float32).to(self.device)
-        print(output, label)
+        #print(output, label)
         loss = self.loss(output, label)
         return loss
 
